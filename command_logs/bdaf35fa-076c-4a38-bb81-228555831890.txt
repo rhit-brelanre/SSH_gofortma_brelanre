@@ -1,0 +1,10 @@
+Session ID: bdaf35fa-076c-4a38-bb81-228555831890
+Command: ls /home/csse
+Output:
+CSSE332
+CSSE332-ThreadProject
+exam2review
+raidertest.txt
+test.txt
+
+

@@ -1,0 +1,10 @@
+Session ID: c2012d68-1ea8-400b-aa52-634d618394ca
+Command: ls /home/csse
+Output:
+CSSE332
+CSSE332-ThreadProject
+exam2review
+raidertest.txt
+test.txt
+
+

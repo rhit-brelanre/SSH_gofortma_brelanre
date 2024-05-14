@@ -1,0 +1,7 @@
+Session ID: db06cc68-e629-41a4-bcae-48d187f56f7d
+Command: [Aexit 
+Output:
+
+Error: bash: line 1: $'\E[Aexit': command not found
+
+

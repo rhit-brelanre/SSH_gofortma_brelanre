@@ -1,0 +1,9 @@
+Session ID: 387e5103-3ca1-4c9a-9c33-522dd67b58be
+Command: ls /home/csse
+Output:
+CSSE332
+CSSE332-ThreadProject
+exam2review
+test.txt
+
+

@@ -1,0 +1,38 @@
+Session ID: 56ac48e3-3615-4a70-8c47-4da48826f458
+Command: ls /
+Output:
+bin
+boot
+cdrom
+dev
+etc
+home
+lib
+lib32
+lib64
+libx32
+lost+found
+media
+mnt
+opt
+proc
+root
+run
+sbin
+snap
+srv
+swap.img
+sys
+tmp
+usr
+var
+
+
+Command: ls /home/csse
+Output:
+CSSE332
+CSSE332-ThreadProject
+exam2review
+test.txt
+
+

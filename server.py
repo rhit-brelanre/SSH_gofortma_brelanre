@@ -1,30 +1,3 @@
-# import paramiko
-# import socket
-# import os
-# import threading
-# import json
-# from getpass import getpass
-
-# def execute_command(ssh_client, command, arguments=[]):
-#     try:
-#         full_command = command + ' ' + ' '.join(arguments)
-        
-#         stdin, stdout, stderr = ssh_client.exec_command(full_command)
-        
-#         output = stdout.read().decode('utf-8')
-#         error = stderr.read().decode('utf-8')
-        
-#         if error:
-#             success = False
-#             output += "\nError: " + error
-#         else:
-#             success = True
-        
-#         return success, output
-#     except paramiko.SSHException as ssh_exception:
-#         return False, f"SSH error: {ssh_exception}"
-#     except socket.error as socket_error:
-#         return False, f"Socket error: {socket_error}"
 import paramiko
 import socket
 import os
@@ -32,6 +5,7 @@ import threading
 import json
 from getpass import getpass
 import uuid
+import shutil  # Import shutil for file operations
 
 def execute_command(ssh_client, command, arguments=[], session_id=None):
     try:
@@ -71,6 +45,8 @@ def handle_client(client_ip, client_port, username, password):
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_client.connect(hostname=client_ip, port=client_port, username=username, password=password)
         
+        sftp_client = ssh_client.open_sftp()
+
         current_directory = "/"
         
         while True:
@@ -84,10 +60,15 @@ def handle_client(client_ip, client_port, username, password):
             elif command.lower() == 'cd':
                 if arguments:
                     target_directory = arguments[0]
-                    if target_directory.startswith('/'):
-                        current_directory = target_directory
+                    if target_directory == '..':
+                        # Go up one directory
+                        current_directory = os.path.dirname(current_directory.rstrip('/'))
                     else:
-                        current_directory = os.path.join(current_directory, target_directory)
+                        # Go to the specified directory
+                        if target_directory.startswith('/'):
+                            current_directory = target_directory
+                        else:
+                            current_directory = os.path.join(current_directory, target_directory)
                 else:
                     print("Usage: cd <directory>")
             elif command.lower() == 'pwd':
@@ -98,6 +79,146 @@ def handle_client(client_ip, client_port, username, password):
                     print(output)
                 else:
                     print("Failed to list directory contents.")
+            elif command.lower() == 'upload':
+                if len(arguments) < 2:
+                    print("Usage: upload <local_file_path> <remote_directory>")
+                else:
+                    local_file_path = arguments[0]
+                    remote_directory = arguments[1]
+                    try:
+                        sftp_client.put(local_file_path, os.path.join(remote_directory, os.path.basename(local_file_path)))
+                        print("File uploaded successfully.")
+                    except FileNotFoundError:
+                        print("Local file not found.")
+                    except IOError:
+                        print("Error occurred during file upload.")   
+            elif command.lower() == 'download':
+                if len(arguments) < 2:
+                    print("Usage: download <remote_file_path> <local_directory>")
+                else:
+                    remote_file_path = arguments[0]
+                    local_directory = arguments[1]
+                    try:
+                        sftp_client.get(remote_file_path, os.path.join(local_directory, os.path.basename(remote_file_path)))
+                        print("File downloaded successfully.")
+                    except FileNotFoundError:
+                        print("Remote file not found.")
+                    except IOError:
+                        print("Error occurred during file download.")
+            elif command.lower() == 'delete':
+                if len(arguments) < 1:
+                    print("Usage: delete <remote_file_path>")
+                else:
+                    remote_file_path = arguments[0]
+                    try:
+                        sftp_client.remove(remote_file_path)
+                        print("File deleted successfully.")
+                    except FileNotFoundError:
+                        print("Remote file not found.")
+                    except IOError:
+                        print("Error occurred while deleting file.")
+            elif command.lower() == 'portscan':
+                if len(arguments) < 2:
+                    print("Usage: portscan <host> <start_port> <end_port>")
+                else:
+                    host = arguments[0]
+                    start_port = int(arguments[1])
+                    end_port = int(arguments[2])
+                    try:
+                        for port in range(start_port, end_port + 1):
+                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            result = sock.connect_ex((host, port))
+                            if result == 0:
+                                print(f"Port {port} is open")
+                            sock.close()
+                    except KeyboardInterrupt:
+                        print("Port scan stopped.")
+                    except socket.gaierror:
+                        print("Hostname could not be resolved.")
+                    except socket.error:
+                        print("Could not connect to server.")
+            elif command.lower() == 'sysinfo':
+                try:
+                    success, output = execute_command(ssh_client, 'uname -a', session_id=session_id)
+                    if success:
+                        print("System Information:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve system information.")
+                except Exception as e:
+                    print(f"Error retrieving system information: {e}")
+            elif command.lower() == 'cpu':
+                try:
+                    success, output = execute_command(ssh_client, 'top -bn1 | grep "Cpu(s)"', session_id=session_id)
+                    if success:
+                        print("CPU Usage:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve CPU usage information.")
+                except Exception as e:
+                    print(f"Error retrieving CPU usage information: {e}")
+            elif command.lower() == 'memory':
+                try:
+                    success, output = execute_command(ssh_client, 'free -m', session_id=session_id)
+                    if success:
+                        print("Memory Usage:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve memory usage information.")
+                except Exception as e:
+                    print(f"Error retrieving memory usage information: {e}")
+            elif command.lower() == 'disk':
+                try:
+                    success, output = execute_command(ssh_client, 'df -h', session_id=session_id)
+                    if success:
+                        print("Disk Usage:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve disk usage information.")
+                except Exception as e:
+                    print(f"Error retrieving disk usage information: {e}")
+            elif command.lower() == 'who':
+                try:
+                    success, output = execute_command(ssh_client, 'who', session_id=session_id)
+                    if success:
+                        print("Logged-in Users:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve logged-in user information.")
+                except Exception as e:
+                    print(f"Error retrieving logged-in user information: {e}")
+
+            elif command.lower() == 'last':
+                try:
+                    success, output = execute_command(ssh_client, 'last', session_id=session_id)
+                    if success:
+                        print("Last Logged-in Users:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve last logged-in user information.")
+                except Exception as e:
+                    print(f"Error retrieving last logged-in user information: {e}")
+            elif command.lower() == 'ps':
+                try:
+                    success, output = execute_command(ssh_client, 'ps aux', session_id=session_id)
+                    if success:
+                        print("Active Processes:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve active process information.")
+                except Exception as e:
+                    print(f"Error retrieving active process information: {e}")
+
+            elif command.lower() == 'userscount':
+                try:
+                    success, output = execute_command(ssh_client, 'who | wc -l', session_id=session_id)
+                    if success:
+                        print("Number of Logged-in Users:")
+                        print(output)
+                    else:
+                        print("Failed to retrieve the number of logged-in users.")
+                except Exception as e:
+                    print(f"Error retrieving the number of logged-in users: {e}")
             else:
                 success, output = execute_command(ssh_client, command, arguments, session_id=session_id)
                 if not success:
@@ -112,6 +233,8 @@ def handle_client(client_ip, client_port, username, password):
         print(f"Socket error: {socket_error}")
     finally:
         ssh_client.close()
+
+
 
 def load_clients():
     try:

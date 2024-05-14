@@ -1,0 +1,7 @@
+Session ID: 784d473a-c9b7-4e8c-ae42-ac16757d347e
+Command: rraider_take test.txt
+Output:
+
+Error: bash: line 1: rraider_take: command not found
+
+
