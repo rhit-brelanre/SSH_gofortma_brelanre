@@ -5,7 +5,7 @@ import threading
 import json
 from getpass import getpass
 import uuid
-import shutil  # Import shutil for file operations
+import subprocess
 
 def execute_command(ssh_client, command, arguments=[], session_id=None):
     try:
@@ -219,6 +219,69 @@ def handle_client(client_ip, client_port, username, password):
                         print("Failed to retrieve the number of logged-in users.")
                 except Exception as e:
                     print(f"Error retrieving the number of logged-in users: {e}")
+            elif command.lower() == 'update':
+                try:
+                    success, output = execute_command(ssh_client, 'sudo apt-get update && sudo apt-get upgrade -y', session_id=session_id)
+                    if success:
+                        print("Software Update Successful.")
+                    else:
+                        print("Failed to update software.")
+                except Exception as e:
+                    print(f"Error updating software: {e}")
+            elif command.lower() == 'adduser':
+                if len(arguments) < 1:
+                    print("Usage: adduser <username>")
+                else:
+                    username = arguments[0]
+                    try:
+                        success, output = execute_command(ssh_client, f'sudo adduser {username}', session_id=session_id)
+                        if success:
+                            print(f"User '{username}' added successfully.")
+                        else:
+                            print(f"Failed to add user '{username}'.")
+                    except Exception as e:
+                        print(f"Error adding user '{username}': {e}")
+            elif command.lower() == 'top':
+                try:
+                    success, output = execute_command(ssh_client, 'top -n 1', session_id=session_id)
+                    if success:
+                        print("System Processes (top 10):")
+                        print(output)
+                    else:
+                        print("Failed to retrieve system processes.")
+                except Exception as e:
+                    print(f"Error retrieving system processes: {e}")
+
+            elif command.lower() == 'tail':
+                if len(arguments) < 1:
+                    print("Usage: tail <log_file>")
+                else:
+                    log_file = arguments[0]
+                    try:
+                        success, output = execute_command(ssh_client, f'tail -n 10 {log_file}', session_id=session_id)
+                        if success:
+                            print(f"Last 10 lines of '{log_file}':")
+                            print(output)
+                        else:
+                            print(f"Failed to read log file '{log_file}'.")
+                    except Exception as e:
+                        print(f"Error reading log file '{log_file}': {e}")
+
+            elif command.lower() == 'grep':
+                if len(arguments) < 2:
+                    print("Usage: grep <pattern> <file>")
+                else:
+                    pattern = arguments[0]
+                    file_path = arguments[1]
+                    try:
+                        success, output = execute_command(ssh_client, f'grep {pattern} {file_path}', session_id=session_id)
+                        if success:
+                            print(f"Lines containing '{pattern}' in '{file_path}':")
+                            print(output)
+                        else:
+                            print(f"No matches found for '{pattern}' in '{file_path}'.")
+                    except Exception as e:
+                        print(f"Error searching for '{pattern}' in '{file_path}': {e}")
             else:
                 success, output = execute_command(ssh_client, command, arguments, session_id=session_id)
                 if not success:
