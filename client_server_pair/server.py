@@ -14,7 +14,7 @@ BUFFER_SIZE = 4096
 
 
 def authenticate_client(client_socket, public_key):
-    encrypt_key = RSA.importKey(client_socket.recv(1024), passphrase=None) 
+    encrypt_key = RSA.importKey(client_socket.recv(4096), passphrase=None) 
     client_socket.send(public_key.exportKey(format='PEM', passphrase=None, pkcs=1)) 
     return encrypt_key
 
@@ -41,7 +41,7 @@ def send_resp(client_socket, msg):
 
 def server_thread(client_socket):
     # generate private key and corresponding public key
-    private_key = RSA.generate(1024)
+    private_key = RSA.generate(4096)
     public_key = private_key.publickey()     
     # get the key to use for encryption from the client
     encrypt_key = authenticate_client(client_socket, public_key)
