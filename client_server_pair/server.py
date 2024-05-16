@@ -37,10 +37,7 @@ def recv_msg(client_socket, string_size):
 def send_resp(client_socket, msg):
     client_socket.sendall(msg)
 
-def server_thread(client_socket):
-    # generate private key and corresponding public key
-    private_key = RSA.generate(4096)
-    public_key = private_key.publickey()     
+def server_thread(client_socket, private_key, public_key):
     # get the key to use for encryption from the client
     encrypt_key = authenticate_client(client_socket, public_key)
     # loop to take command input and communicate with server
@@ -84,17 +81,23 @@ def server_program():
     
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    server_socket.bind(('localhost', port))
+    server_socket.bind(('localhost', port))        
+    
+    private_key = RSA.generate(4096)
+    public_key = private_key.publickey() 
+    print("Generated Keys")
+
     print("Listening for Client")
 
 
     while True:
         server_socket.listen(5)
         # create client socket
+        
         client_socket, address = server_socket.accept()
         print("Client Connected")
         
-        server_thread(client_socket)
+        server_thread(client_socket, private_key, public_key)
         print("---------------------------------------------------------")
 
         print("Listening for Another Client")
