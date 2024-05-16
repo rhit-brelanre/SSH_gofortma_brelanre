@@ -5,8 +5,6 @@ import subprocess
 
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
-from Crypto import Random
-import rsa
 import math
 
 
@@ -58,14 +56,18 @@ def server_thread(client_socket):
 
         # break if "exit" is input
         if command == 'exit':
-            print('Goodbye')
+            print('Disconnecting from Current Client')
             break
 
         string_size = int(client_socket.recv(10).decode())
 
         response = recv_msg(client_socket, string_size)
         decrypted_response = decrypt(response, private_key)
-        print("Output from Client:\n", decrypted_response)
+        if(decrypted_response == ""):
+            print("No Output from Command")
+        else:
+            print("\nOutput from Client:")
+            print(decrypted_response)
     # close socket on break
     client_socket.close()
 
@@ -83,13 +85,19 @@ def server_program():
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     server_socket.bind(('localhost', port))
+    print("Listening for Client")
 
-    server_socket.listen(5)
 
-    # create client socket
-    client_socket, address = server_socket.accept()
-    print("Client Connected")
-    server_thread(client_socket)
+    while True:
+        server_socket.listen(5)
+        # create client socket
+        client_socket, address = server_socket.accept()
+        print("Client Connected")
+        
+        server_thread(client_socket)
+        print("---------------------------------------------------------")
+
+        print("Listening for Another Client")
 
 if __name__ == '__main__':
     server_program()

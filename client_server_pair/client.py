@@ -5,8 +5,6 @@ import subprocess
 
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
-from Crypto import Random
-import rsa
 import math
 
 BUFFER_SIZE = 4096
@@ -42,23 +40,12 @@ def recv_msg(client_socket, string_size):
     return response
 
 def execute_command(command):
-    command_arr = split_ignore_quotes(command, ' ')
-    print(command_arr)
-    command_resp = subprocess.check_output(command_arr)
+    command_arr = split_command(command, ' ')
+    command_resp = subprocess.run(command_arr, capture_output = True).stdout
     return command_resp
 
-def split_ignore_quotes(string, sep):
-    if string.find('"') == -1:
-        return string
-    else:
-        split_str = string.split('"')
-        complete_split = []
-        i = 1
-        for substr in split_str:
-            if i%2 == 1:
-                complete_split += substr.split(' ')
-            else:
-                complete_split += '\"' + substr + '\"'
+def split_command(string, sep):
+    complete_split = string.split(sep)
     return complete_split
 
 
