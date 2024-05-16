@@ -5,7 +5,6 @@ import threading
 import json
 from getpass import getpass
 import uuid
-import subprocess
 
 def execute_command(ssh_client, command, arguments=[], session_id=None):
     try:
@@ -37,7 +36,7 @@ def execute_command(ssh_client, command, arguments=[], session_id=None):
 
 def handle_client(client_ip, client_port, username, password):
     try:
-        session_id = str(uuid.uuid4())  # Generate a unique session ID
+        session_id = str(uuid.uuid4())  
         with open(f"command_logs/{session_id}.txt", "w") as f:
             f.write(f"Session ID: {session_id}\n")
         
@@ -61,10 +60,8 @@ def handle_client(client_ip, client_port, username, password):
                 if arguments:
                     target_directory = arguments[0]
                     if target_directory == '..':
-                        # Go up one directory
                         current_directory = os.path.dirname(current_directory.rstrip('/'))
                     else:
-                        # Go to the specified directory
                         if target_directory.startswith('/'):
                             current_directory = target_directory
                         else:
